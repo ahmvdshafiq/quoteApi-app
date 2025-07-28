@@ -1,5 +1,5 @@
 # Ignore environment files
-.env
+terraform/.env
 terraform/.terraform/
 terraform.tfstate
 terraform.tfstate.backup
