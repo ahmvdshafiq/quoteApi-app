@@ -1,1 +1,7 @@
-.terraform/
+# Ignore environment files
+terraform/.env
+terraform/.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
