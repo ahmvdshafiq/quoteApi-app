@@ -1,0 +1,44 @@
+name: Deploy Quote API to AKS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to ACR
+        run: az acr login --name quoteacrregistry
+
+      - name: Build Docker image
+        run: docker build -t quoteacrregistry.azurecr.io/quote-api:${{ github.sha }} .
+
+      - name: Push image to ACR
+        run: docker push quoteacrregistry.azurecr.io/quote-api:${{ github.sha }}
+
+      - name: Update image tag in deployment.yaml
+        run: |
+          sed -i "s|image: .*|image: quoteacrregistry.azurecr.io/quote-api:${{ github.sha }}|" deployment.yaml
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          cluster-name: quote-aks-cluster
+          resource-group: quoteapp-rg
+
+      - name: Deploy to AKS
+        run: |
+          kubectl apply -f deployment.yaml
+          kubectl apply -f service.yaml
